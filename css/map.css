@@ -48,3 +48,14 @@
         
     }
 
+body, a:hover {
+    cursor: url(http://ani.cursors-4u.net/toons/too-12/too1137.cur), progress !important;
+}
+
+ol li {
+    opacity: 0.5;
+}
+
+ol li:hover {
+    opacity: 1 !important;
+}
