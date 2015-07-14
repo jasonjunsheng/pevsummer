@@ -1,4 +1,4 @@
-// "use strict";
+"use strict";
 
 var trips = [];
 var Maps = google.maps;
@@ -7,6 +7,14 @@ var lines = [];
 var intervals = [];
 var tripID;
 var map;
+var t;
+var markers = [];
+
+function start() {
+    t = 0;
+    tripChanged(trips[t]);
+    $("ol#trip-list li:nth-child(" + (t + 1) + ")").css("opacity", "1");
+}
 
 function animateLines() {
     for (var n = 0; n < intervals.length; n++) {
@@ -29,6 +37,8 @@ function animateLines() {
             count = (count + 1) % line.travelTime.value;
             if (count === 0) {
                 window.clearInterval(interval);
+                tripChanged(trips[++t]);
+                $("ol#trip-list li:nth-child(" + (t + 1) + ")").css("opacity", "1");
                 return;
             }
             var icons = line.get('icons');
@@ -44,7 +54,6 @@ function drawPaths(paths) {
         lines[l].setMap(null);
     }
     var bounds = new Maps.LatLngBounds();
-
     for (var p = 0; p < paths.length; p++) {
         var color;
         if (paths[p].request.travelMode === Maps.TravelMode.BICYCLING) {
@@ -74,8 +83,9 @@ function drawPaths(paths) {
                 }
             }
         }
-        polyline.travelMode = paths[p].request.travelMode;
-        polyline.travelTime = paths[p].routes[0].legs[0].duration;
+        polyline.travelMode     = paths[p].request.travelMode;
+        polyline.travelTime     = paths[p].routes[0].legs[0].duration;
+        polyline.travelDistance = paths[p].routes[0].legs[0].distance;
         polyline.setMap(map);
         lines.push(polyline);
     }
@@ -83,19 +93,25 @@ function drawPaths(paths) {
 }
 
 function tripChanged(trip) {
+    console.log(trip);
     var res = [];
     var origin = new Maps.LatLng(trip.start.lat, trip.start.long);
     var destination = new Maps.LatLng(trip.end.lat, trip.end.long);
     var dirfunc = function(response, status) {
-        if (status == google.maps.DirectionsStatus.OK) {
+        if (status == Maps.DirectionsStatus.OK) {
+            // console.log(response);
             res.push(response);
             if (res.length === 2) {
                 drawPaths(res);
                 animateLines();
-
-            }
+                var marker = new Maps.Marker({
+                    position: origin,
+                    map: map
+                    // title: 'Hello World!'
+            });
         }
     };
+};
     Directions.route({
         origin:      origin,
         destination: destination,
