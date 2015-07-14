@@ -48,6 +48,11 @@
 
     }
 
+div.scrollable {
+    overflow-y: scroll;
+    max-height: 300px;
+}
+
 body, a:hover {
     cursor: url(http://ani.cursors-4u.net/toons/too-12/too1137.cur), progress !important;
 }
