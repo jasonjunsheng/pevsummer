@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html>
   <head>
+
     <meta http-equiv="content-type" content="text/html; charset=utf-8">
     <title>PEV Team</title>
     <link rel="stylesheet" type="text/css" href="css/index.css"></link>
@@ -20,10 +21,15 @@
                   <input type="file" id="trip-file" name="trip-file" />
                 </div>
               </form>
+              <div align="right">
+                <button onclick="start()">Start</button>
+              </div>
             </div>
         </td>
         <td>
+          <div class="scrollable">
             <ol id="trip-list"></ol>
+          </div>
         </td>
     </tr></table>
   </body>
