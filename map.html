@@ -1,7 +1,6 @@
 <!DOCTYPE html>
 <html>
   <head>
-
     <meta http-equiv="content-type" content="text/html; charset=utf-8">
     <title>PEV Team</title>
     <link rel="stylesheet" type="text/css" href="css/index.css"></link>
@@ -10,27 +9,61 @@
     <script type="text/javascript" src="lib/papaparse.min.js"></script>
     <script type="text/javascript" src="js/index.js"></script>
   </head>
-  <body>
-    <table><tr>
-        <td>
-            <div id="map-canvas"></div>
-            <div id="input">
-              <form id="taxi-data">
-                <div>
-                  <label for="trip-file">Trip file:</label>
-                  <input type="file" id="trip-file" name="trip-file" />
-                </div>
-              </form>
-              <div align="right">
-                <button onclick="start()">Start</button>
-              </div>
-            </div>
-        </td>
-        <td>
-          <div class="scrollable">
-            <ol id="trip-list"></ol>
-          </div>
-        </td>
-    </tr></table>
+
+<body>
+	<div id="map-canvas" class="style"></div>
+	<div id="input" class="style">
+		<form id="taxi-data">
+			<div>
+				<label for="trip-file"> Trip File: </label>
+				<input id="trip-file" name="trip-file" type="file" />
+			</div>
+		</form>
+		<div align="right">
+			<button id="startBtn" onclick="start()">Start</button>
+		</div>
+	</div>
+
+	<div id="trip-box" class="style">
+		<div id="prompt">Please upload your file</div>
+		<ol id="trip-list"></ol>
+	</div>
+
+	<div>
+    <table id="data-box" class="style">
+      <tr style="line-height:20px;">
+        <td class="header"></td>
+        <td class="header">Current trip data:</td>
+        <td class="header">Total trip data:</td>
+      <tr>
+        <td style="text-align: left;">Bike Time : </td>
+        <td><p id="c-bike-time">0 seconds</p></td>
+        <td><p id="bike-time">0 seconds</p></td>
+      </tr>
+      <tr>
+        <td style="text-align: left;">Bike Distance : </td>
+        <td><p id="c-bike-dist">0 meters</p></td>
+        <td><p id="bike-dist">0 meters</p></td>
+      </tr>
+      <tr>
+        <td style="text-align: left;">Drive Time : </td>
+        <td><p id="c-drive-time">0 seconds</p></td>
+        <td><p id="drive-time">0 seconds</p></td>
+      </tr>
+      <tr>
+        <td style="text-align: left;">Drive Distance : </td>
+        <td><p id="c-drive-dist">0 meters</p></td>
+        <td><p id="drive-dist">0 meters</p></td>
+      </tr>
+    </table>
+   </div>
+   <div>
+   <table id="taxi-box" class="style">
+     <tr>
+        <td style="text-align:left">TAXI TIME :</td>
+        <td><p id="taxi-time">0 seconds</p></td>
+     </tr>
+    </table>
+    </div>
   </body>
-</html>
+ </html>
