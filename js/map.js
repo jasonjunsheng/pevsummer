@@ -14,6 +14,7 @@ var bDist = 0;
 var dTime = 0;
 var dDist = 0;
 var allLines = {};
+var mode = {};
 
 
 function start() {
@@ -25,6 +26,26 @@ function start() {
     tripChanged(trips[t]);
     $("ol#trip-list li:nth-child(" + (t + 1) + ")").css("opacity", "1");
 }
+
+function bike() {
+    mode = {};
+    mode[Maps.TravelMode.BICYCLING] = true;
+    start();
+}
+
+function car() {
+    mode = {};
+    mode[Maps.TravelMode.DRIVING] = true;
+    start();
+}
+
+function both() {
+    mode = {};
+    mode[Maps.TravelMode.BICYCLING] = true;
+    mode[Maps.TravelMode.DRIVING] = true;
+    start();
+}
+
 
 function clear() {
     bTime = 0;
@@ -90,7 +111,7 @@ function animateLines() {
                 finished += 1;
                 interval = undefined;
 
-                if (finished === 2) {
+                if (finished === lines.length) {
 	                tripChanged(trips[++t]);
 	                $("ol#trip-list li:nth-child(" + (t + 1) + ")").css("opacity", "1");
 	                lines.forEach(function(polyline) {
@@ -164,10 +185,14 @@ function drawPaths(paths, origin, id) {
         marker.info.id = id;
     }
     map.fitBounds(bounds);
-    $("p#c-bike-time").html(marker.info[Maps.TravelMode.BICYCLING].time.value + " seconds");
-    $("p#c-bike-dist").html(marker.info[Maps.TravelMode.BICYCLING].distance.value + " meters");
-    $("p#c-drive-time").html(marker.info[Maps.TravelMode.DRIVING].time.value + " seconds");
-    $("p#c-drive-dist").html(marker.info[Maps.TravelMode.DRIVING].distance.value + " meters");
+    if (marker.info[Maps.TravelMode.BICYCLING]) {
+        $("p#c-bike-time").html(marker.info[Maps.TravelMode.BICYCLING].time.value + " seconds");
+        $("p#c-bike-dist").html(marker.info[Maps.TravelMode.BICYCLING].distance.value + " meters");
+    }
+    if (marker.info[Maps.TravelMode.DRIVING]) {
+        $("p#c-drive-time").html(marker.info[Maps.TravelMode.DRIVING].time.value + " seconds");
+        $("p#c-drive-dist").html(marker.info[Maps.TravelMode.DRIVING].distance.value + " meters");
+    }
 
     Maps.event.addListener(marker, 'click', function() {
     	marker_data(marker.info);
@@ -182,20 +207,24 @@ function marker_data(info) {
     lines = [];
 
 	if (tripID === info.id) {
-		accumulator({});
+		// accumulator({});
 		tripID = undefined;
 		return;
 	}
 	tripID = info.id;
 
-	var bTimeSpecific = info[Maps.TravelMode.BICYCLING].time.value;
-	var bDistSpecific = info[Maps.TravelMode.BICYCLING].distance.value;
-	var dTimeSpecific = info[Maps.TravelMode.DRIVING].time.value;
-	var dDistSpecific = info[Maps.TravelMode.DRIVING].distance.value;
-    $("p#c-bike-time").html(bTimeSpecific + " seconds");
-    $("p#c-bike-dist").html(bDistSpecific + " meters");
-    $("p#c-drive-time").html(dTimeSpecific + " seconds");
-    $("p#c-drive-dist").html(dDistSpecific + " meters");
+    if (marker.info[Maps.TravelMode.BICYCLING]) {
+        var bTimeSpecific = info[Maps.TravelMode.BICYCLING].time.value;
+    	var bDistSpecific = info[Maps.TravelMode.BICYCLING].distance.value;
+        $("p#c-bike-time").html(bTimeSpecific + " seconds");
+        $("p#c-bike-dist").html(bDistSpecific + " meters");
+    }
+    if (marker.info[Maps.TravelMode.DRIVING]) {
+        var dTimeSpecific = info[Maps.TravelMode.DRIVING].time.value;
+    	var dDistSpecific = info[Maps.TravelMode.DRIVING].distance.value;
+        $("p#c-drive-time").html(dTimeSpecific + " seconds");
+        $("p#c-drive-dist").html(dDistSpecific + " meters");
+    }
 
     allLines[info.id].forEach(function(line) {
     	lines.push(line);
@@ -213,22 +242,26 @@ function tripChanged(trip) {
     var dirfunc = function(response, status) {
         if (status == Maps.DirectionsStatus.OK) {
             res.push(response);
-            if (res.length === 2) {
+            if (res.length === Object.keys(mode).length) {
                 drawPaths(res, origin, trip.id);
                 animateLines();
             }
         }
     };
-    Directions.route({
-        origin:      origin,
-        destination: destination,
-        travelMode:  Maps.TravelMode.DRIVING,
-    }, dirfunc);
-    Directions.route({
-        origin:      origin,
-        destination: destination,
-        travelMode:  Maps.TravelMode.BICYCLING,
-    }, dirfunc);
+    if (mode[Maps.TravelMode.DRIVING]) {
+        Directions.route({
+            origin:      origin,
+            destination: destination,
+            travelMode:  Maps.TravelMode.DRIVING,
+        }, dirfunc);
+    }
+    if (mode[Maps.TravelMode.BICYCLING]) {
+        Directions.route({
+            origin:      origin,
+            destination: destination,
+            travelMode:  Maps.TravelMode.BICYCLING,
+        }, dirfunc);
+    }
 }
 
 
@@ -253,7 +286,7 @@ function fileChanged(event) {
                         address: row[6],
                     },
                 };
-                
+
                 trips.push(trip);
             }
         },
@@ -263,7 +296,7 @@ function fileChanged(event) {
             for (var t = 0; t < trips.length; t++) {
                 var index = t;
                 $("ol#trip-list").append("<li data-index=\"" + index + "\">" + trips[t].start.address + "</li>");
-              
+
             }
             $("#trip-list").click(function(event) {
                 var newID = $(event.toElement).attr("data-index");

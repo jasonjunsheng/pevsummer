@@ -17,11 +17,19 @@
 			<div>
 				<label for="trip-file"> Trip File: </label>
 				<input id="trip-file" name="trip-file" type="file" />
+                <button id="startBtn" onclick="start()">STOP</button>
 			</div>
+
 		</form>
 		<div align="right">
-			<button id="startBtn" onclick="start()">Start</button>
+			<button id="startBtn" onclick="both()">Bike &amp; Taxi</button>
 		</div>
+        <div align="right">
+            <button id="bikeBtn" onclick="bike()">Bike</button>
+        </div>
+        <div align="right">
+            <button id="driveBtn" onclick="car()">Taxi</button>
+        </div>
 	</div>
 
 	<div id="trip-box" class="style">
