@@ -13,15 +13,55 @@ var bTime = 0;
 var bDist = 0;
 var dTime = 0;
 var dDist = 0;
+var taxiTime = 0;
+
 var allLines = {};
 var mode = {};
+
+// window.localStorage.setItem(id, json string)
+
+function day() {
+    var time = 0;
+    var timeLines = makeTimeLines();
+    window.setInterval(function() {
+        if (timeLines[time]) {
+            timeLines[time].forEach(tripChanged);
+        }
+        time++;
+        
+    }, 1000);
+        
+}
+
+function makeTimeLines() {
+    var timeLines = {};
+    function timeParse(trip) {
+        var t = new Date(trip.start.time).getTime();
+        t %= 86400000;
+        t /= 60000;
+        var key = Math.floor(t);
+        key -= 240;
+        if (timeLines[key]) {
+            timeLines[key].push(trip);
+        }
+        else {
+            timeLines[key] = [];
+        }
+    }
+    trips.forEach(timeParse);
+    // console.log(timeLines);
+    return timeLines;
+}
 
 
 function start() {
     for (var m = 0; m < markers.length; m++) {
         markers[m].setMap(null);
     }
-    document.getElementById("startBtn").disabled = true;
+    document.getElementById("bothBtn").disabled = true;
+    document.getElementById("bikeBtn").disabled = true;
+    document.getElementById("driveBtn").disabled = true;
+
     t = 0;
     tripChanged(trips[t]);
     $("ol#trip-list li:nth-child(" + (t + 1) + ")").css("opacity", "1");
@@ -46,15 +86,35 @@ function both() {
     start();
 }
 
+function taxi(trip) {
+    var start   = new Date(trip.start.time);
+    var end     = new Date(trip.end.time);
+    var time = (end - start)/1000;
+    taxiTime += time;
+    $("p#c-taxi-time").html(expandTime(time));
+    $("p#t-taxi-time").html(expandTime(taxiTime));
+    
+}
+
+function expandTime(time) {
+    var hours   = Math.floor(time/3600);
+    time %= 3600;
+    var minutes = Math.floor(time/60);
+    var seconds = time%60;
+    return hours + "hrs " + minutes + "min ";
+    
+    // + seconds + "sec"
+    
+}
 
 function clear() {
     bTime = 0;
     bDist = 0;
     dTime = 0;
     dDist = 0;
-    $("p#bike-time").html(bTime + " seconds");
+    $("p#bike-time").html(expandTime(bTime));
     $("p#bike-dist").html(bDist + " meters");
-    $("p#drive-time").html(dTime + " seconds");
+    $("p#drive-time").html(expandTime(dTime));
     $("p#drive-dist").html(dDist + " meters");
 }
 
@@ -75,9 +135,9 @@ function accumulator(mark) {
         dTime += mark.travelTime.value;
         dDist += mark.travelDistance.value;
     }
-    $("p#bike-time").html(bTime + " seconds");
+    $("p#bike-time").html(expandTime(bTime));
     $("p#bike-dist").html(bDist + " meters");
-    $("p#drive-time").html(dTime + " seconds");
+    $("p#drive-time").html(expandTime(dTime));
     $("p#drive-dist").html(dDist + " meters");
 }
 
@@ -133,6 +193,7 @@ function animateLines() {
 }
 
 function drawPaths(paths, origin, id) {
+
     var marker = new Maps.Marker({
             position: origin,
             map: map,
@@ -177,7 +238,14 @@ function drawPaths(paths, origin, id) {
         polyline.setMap(map);
         lines.push(polyline);
         allLines[id].push(polyline);
-
+        
+        var popup = new Maps.InfoWindow({
+                content: "Distance: " + polyline.travelDistance.value+ "\n"
+                        + "Duration: "+ polyline.travelTime.value
+        });
+        Maps.event.addListener(marker, 'click', function(){
+            popup.open(map, marker);
+        });
         marker.info[polyline.travelMode] = {
         	distance: polyline.travelDistance,
         	time:     polyline.travelTime,
@@ -185,15 +253,21 @@ function drawPaths(paths, origin, id) {
         marker.info.id = id;
     }
     map.fitBounds(bounds);
+    map.setZoom(map.getZoom() - 1);
     if (marker.info[Maps.TravelMode.BICYCLING]) {
-        $("p#c-bike-time").html(marker.info[Maps.TravelMode.BICYCLING].time.value + " seconds");
+        $("p#c-bike-time").html(expandTime(marker.info[Maps.TravelMode.BICYCLING].time.value));
         $("p#c-bike-dist").html(marker.info[Maps.TravelMode.BICYCLING].distance.value + " meters");
     }
     if (marker.info[Maps.TravelMode.DRIVING]) {
-        $("p#c-drive-time").html(marker.info[Maps.TravelMode.DRIVING].time.value + " seconds");
+        $("p#c-drive-time").html(expandTime(marker.info[Maps.TravelMode.DRIVING].time.value));
         $("p#c-drive-dist").html(marker.info[Maps.TravelMode.DRIVING].distance.value + " meters");
     }
-
+    var stored = {
+        "BICYCLING": marker.info[Maps.TravelMode.BICYCLING],
+        "DRIVING": marker.info[Maps.TravelMode.DRIVING]
+    }
+    console.log(stored);
+    // window.localStorage(marker.info.id, JSON.stringify(stored));
     Maps.event.addListener(marker, 'click', function() {
     	marker_data(marker.info);
     });
@@ -212,17 +286,17 @@ function marker_data(info) {
 		return;
 	}
 	tripID = info.id;
-
+    
     if (marker.info[Maps.TravelMode.BICYCLING]) {
         var bTimeSpecific = info[Maps.TravelMode.BICYCLING].time.value;
     	var bDistSpecific = info[Maps.TravelMode.BICYCLING].distance.value;
-        $("p#c-bike-time").html(bTimeSpecific + " seconds");
+        $("p#c-bike-time").html(expandTime(bTimeSpecific));
         $("p#c-bike-dist").html(bDistSpecific + " meters");
     }
     if (marker.info[Maps.TravelMode.DRIVING]) {
         var dTimeSpecific = info[Maps.TravelMode.DRIVING].time.value;
     	var dDistSpecific = info[Maps.TravelMode.DRIVING].distance.value;
-        $("p#c-drive-time").html(dTimeSpecific + " seconds");
+        $("p#c-drive-time").html(expandTime(dTimeSpecific));
         $("p#c-drive-dist").html(dDistSpecific + " meters");
     }
 
@@ -236,8 +310,11 @@ function tripChanged(trip) {
     if (!trip) {
         return
     }
+    
+    taxi(trip);
+
     var res = [];
-    var origin = new Maps.LatLng(trip.start.lat, trip.start.long);
+    var origin      = new Maps.LatLng(trip.start.lat, trip.start.long);
     var destination = new Maps.LatLng(trip.end.lat, trip.end.long);
     var dirfunc = function(response, status) {
         if (status == Maps.DirectionsStatus.OK) {
@@ -309,7 +386,10 @@ function fileChanged(event) {
             });
         }
     });
-    document.getElementById("startBtn").disabled = false;
+    document.getElementById("bothBtn").disabled = false;
+    document.getElementById("bikeBtn").disabled = false;
+    document.getElementById("driveBtn").disabled = false;
+
 }
 
 window.onload = function() {
@@ -320,5 +400,6 @@ window.onload = function() {
       mapTypeId: Maps.MapTypeId.ROADMAP
     });
     document.getElementById("trip-file").value = "";
-    document.getElementById("startBtn").disabled = true;
-};
+    document.getElementById("bothBtn").disabled = true;
+    document.getElementById("bikeBtn").disabled = true;
+    document.getElementById("driveBtn").disabled = true;};
